@@ -1,0 +1,46 @@
+package com.weaponizerzstudio.fieryescalation_gpsrts
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
+import netTools_and_related.currentUrl
+
+/*
+Here I will be doing my login screen that contains the following:
+1. IP address field
+2. Port field
+3. Connect button
+4. Text view that updates the user on what is happening.
+
+Also, remember this is more of a debug login screen, not gon add email and password stuff
+Just a login ID and Account backup code that will be generated - but that too is to be done later
+ */
+
+@Preview(showSystemUi = true)
+@Composable
+fun LoginScreen0() {
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            var urlServe : String by remember { mutableStateOf("URL HERE") }
+            val mainText = "Connection Screen"
+            TextField(
+                value = urlServe,
+                onValueChange = {urlServe = it}
+            )
+            Text(text = mainText, fontSize = 18.sp)
+            Text(text = urlServe, fontSize = 20.sp)
+            currentUrl = urlServe
+            AppNavigation()
+        }
+}
