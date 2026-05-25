@@ -59,7 +59,6 @@ fun LoginDialog(
                         currentUrl = "127.0.0.1"
                         currentPort = 5010
                     }
-                    // --- END OF NEW LOGIC ---
 
                     val result = TcpClienter.loginToServer(username, myLat, myLong)
                     onLoginResult(result, rawIp)
