@@ -29,7 +29,7 @@ class FieryNetwork {
     fun startPrayer() {
         scope.launch {
             while (!socket.isClosed) {
-                TODO()
+                /* Will add code later.*/
             }
         }
     }
