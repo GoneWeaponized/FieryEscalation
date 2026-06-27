@@ -1,22 +1,27 @@
 package com.weaponizerzstudio.fieryescalation_gpsrts
 //I named it test file at first because I had no idea what I was planning to do here at first.
 
-/* Behind the scenes is where i keep the most horrible codes
+/* Behind the scenes is where I keep the most horrible codes
 in case you, my reader, want to destroy your eyes please go ahead and read that. */
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,21 +34,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import behind_the_scenes.DataStoreManager
-import behind_the_scenes.locationGet
-import behind_the_scenes.parseTcpToEntity
-import fieryEntity.Entity
+import backStage.DataStoreManager
+import backStage.locationGet
+import backStage.parseTcpToEntity
+import fieryEntity.PlayerEntity
 import io.github.dellisd.spatialk.geojson.Position
 import kotlinx.coroutines.launch
 import mapItemLoading.LayerPlayers
 import mapItemLoading.updateEntityList
-import netTools_and_related.TcpClienter
-import netTools_and_related.currentPort
-import netTools_and_related.currentUrl
+import netTools.FieryNetwork
+import netTools.TcpClienter
+import netTools.currentPort
+import netTools.currentUrl
+import netTools.extras.ByteCommands
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.map.GestureOptions
@@ -53,73 +62,70 @@ import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.map.RenderOptions
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.compose.style.rememberStyleState
-import ui_elements_misc.LoginDialog
+import org.maplibre.compose.util.ClickResult
+import uiElementsAndMisc.LoginDialog
+import uiElementsAndMisc.UuidLoginScreen
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun MapItem(locationGet: locationGet) {
-    //Here gon define the variables.
+    //Here gonna define the variables.
+    var showUuidDialog by remember { mutableStateOf(false) }
     var myLat by remember { mutableStateOf<Double?>(null) }
     var myLong by remember { mutableStateOf<Double?>(null) }
+    var clickedPos by remember { mutableStateOf<Position?>(null)}
+    val network = FieryNetwork()
+
     LaunchedEffect(Unit) {
         locationGet.requestLocationUpdates { location ->
             myLat = location.latitude
             myLong = location.longitude
         }
     }
-    var mapStyleVal1: String by remember { mutableStateOf("https://tiles.openfreemap.org/styles/fiord") }
+
+
+    val focusManager = LocalFocusManager.current
     var theBoolThing by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val dataStoreManager = remember { DataStoreManager(context) }
     val scope = rememberCoroutineScope()
     val savedIP by dataStoreManager.getIp.collectAsState(initial = "")
-    //val savedBool by dataStoreManager.getIp.collectAsState(initial = false)
+    val savedTheme by dataStoreManager.getThemeRn.collectAsState(initial = "https://tiles.openfreemap.org/styles/fiord")
     var urlString : String by remember { mutableStateOf("") }
     val savedMeId by dataStoreManager.getMyId.collectAsState(initial = "FETCHING")
     LaunchedEffect(savedIP) { urlString = savedIP; currentUrl = savedIP}
-    //will probably load json data
-    val entities = remember { mutableStateListOf<Entity>() }
+    //will probably load JSON data
+    //====================URL PATCHING================================
+    val entities = remember { mutableStateListOf<PlayerEntity>() }
     LaunchedEffect(savedIP) {
         if (savedIP.isNotEmpty()) {
-            urlString = savedIP
-            currentUrl = savedIP
-            Log.d("TCP", "Global IP updated to: ${currentUrl}")
-        }
-    }
-    Log.d("saved ID dump", savedMeId)
-
-    //=================SAVING IP ADDRESS=============================
-    LaunchedEffect(currentUrl, savedMeId) {
-        while(true) {
-            try {
-                if (myLat != null && myLong != null && savedMeId != "FETCHING" && savedMeId != "") {
-                    val command = "GET_PLAYERS|$savedMeId|$myLat|$myLong"
-                    val response = TcpClienter.fetchMessage(command)
-                    Log.d("TCP DATA DUMP","Recieved: $response")
-                    val newEntity = parseTcpToEntity(response)
-                    if (newEntity != null) {
-                        updateEntityList(entities, newEntity)
-                        Log.d("ENTI NOT NULL DUMP", "Entity COUNT: ${entities.size}")
-                    }
-
-                }
-            } catch (e: Exception) {
-                Log.d("hello","$e")
+            if (savedIP.contains(":")) {
+                val parts = savedIP.split(":")
+                currentUrl = parts[0]
+                currentPort = parts[1].toIntOrNull() ?: 5010
+            } else {
+                currentUrl = "127.0.0.1"
+                currentPort = 5010
             }
-            kotlinx.coroutines.delay(1000) //idk lets go with 10 second delay
-            //will make it update better but launch does it per second so idk since the
-            //main goal is always local player global ones are not so important
         }
     }
+    //================CALLING PLAYERS================================
+
 
     //I have a bad feeling because it's turning into a monolith :skull:
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize() .pointerInput(Unit) {
+        detectTapGestures(onTap = {
+            focusManager.clearFocus()
+        })
+    }) {
         if (savedMeId != "" && savedMeId != "FETCHING") {
+            //=================MAP STUFF========================================
         val cameraState =
             rememberCameraState(CameraPosition(target = Position(29.265910, 52.049274), zoom = 1.0))
         MaplibreMap(
             zoomRange = 2.5f..22f,
-            baseStyle = BaseStyle.Uri(mapStyleVal1),
+            baseStyle = BaseStyle.Uri(savedTheme),
             cameraState = cameraState,
             styleState = rememberStyleState(),
             options = MapOptions(
@@ -138,24 +144,32 @@ fun MapItem(locationGet: locationGet) {
                 renderOptions = RenderOptions(
                     RenderOptions.RenderMode.SurfaceView
                 ),
-            )
+            ),
+            onMapClick = {pos, _ ->
+                clickedPos = pos
+               ClickResult.Consume},
         ) { //Map layer stuff loader
             //SymbolLayerTypeShi()
             LayerPlayers(entities = entities)
         }
         // TOP LAYER ROW
+    Column(verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.align(Alignment.TopCenter)) {
         Row {
             //=========================THEME SWITCH====================
-            Box(modifier = Modifier
+            Box(
+                modifier = Modifier
                 .size(50.dp, 50.dp)
                 .padding(top = 0.dp)
                 .clickable(
                     onClick = {
                         theBoolThing = !theBoolThing
-                        mapStyleVal1 = if (theBoolThing) {
+                        val newTheme = if (theBoolThing) {
                             "https://tiles.openfreemap.org/styles/fiord"
                         } else {
                             "https://tiles.openfreemap.org/styles/positron"
+                        }
+                        scope.launch {
+                            dataStoreManager.saveTheme(newTheme)
                         }
                     }
                 )
@@ -172,10 +186,11 @@ fun MapItem(locationGet: locationGet) {
             // ========================IP CONNECT================
 
 
-            Box(modifier = Modifier
-                .weight(1f)
-                .size(50.dp)
-                .background(Color.DarkGray.copy(0.3f)),
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .size(50.dp)
+                    .background(Color.DarkGray.copy(0.3f)),
                 contentAlignment = Alignment.Center
                 //align(Alignment.TopCenter)
             ) {
@@ -199,30 +214,34 @@ fun MapItem(locationGet: locationGet) {
                             dataStoreManager.saveIp(newValue) // Save the full string (e.g. host:port)
                         }
                     },
-                    // ...
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
                 )
             }
             //====================ZOOM=======================
 
-            Box(modifier = Modifier
-                .size(50.dp, 50.dp)
-                .clickable(
-                    onClick = {
-                        locationGet.getLastLoc { location ->
-                            location?.let {
-                                cameraState.position = CameraPosition(
-                                    target = Position(location.longitude, location.latitude),
-                                    zoom = 15.0
-                                )
+            Box(
+                modifier = Modifier
+                    .size(50.dp, 50.dp)
+                    .clickable(
+                        onClick = {
+                            locationGet.getLastLoc { location ->
+                                location?.let {
+                                    cameraState.position = CameraPosition(
+                                        target = Position(location.longitude, location.latitude),
+                                        zoom = 15.0
+                                    )
+                                }
                             }
-                        }
-                    })
-                //.align(Alignment.TopEnd)
-                .padding(top = 0.dp)
-                .background(
-                    Color.DarkGray.copy(0.3f), shape = RoundedCornerShape(0.dp)
-                ),
-                contentAlignment = Alignment.Center)
+                        })
+                    //.align(Alignment.TopEnd)
+                    .padding(top = 0.dp)
+                    .background(
+                        Color.DarkGray.copy(0.3f), shape = RoundedCornerShape(0.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            )
             {
                 Icon(
                     painter = painterResource(id = R.drawable.outline_arrows_input_24),
@@ -230,26 +249,51 @@ fun MapItem(locationGet: locationGet) {
                     tint = Color.White
                 )
             }
+            //================UUID LOGIN SCREEN=============================
+
+            Box(
+                modifier = Modifier
+                    .size(50.dp, 50.dp)
+                    .padding(top = 0.dp)
+                    .clickable(
+                        onClick = { showUuidDialog = true }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(painter = painterResource(id = R.drawable.outline_id_card_24), tint = Color.White, contentDescription = "Show UUID")
+            }
 
 
         }
-        //=======================ATTRIBUTION===================================
+    }
+            // BOTTOM BAR
 
-        Box(modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .padding(bottom = 5.dp, end = 10.dp) // Lowered padding to keep it on screen
-            .background(Color.White.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
-            .padding(4.dp), // Internal padding for the text
-            contentAlignment = Alignment.Center)
-        {
-            Text(
-                text = "© OpenStreetMap contributors",
-                fontSize = 12.sp,
-                color = Color.Black
-            )
-            Log.d("ID change:", savedMeId)
-            Log.d("Lat Long dump","$myLat, $myLong")
+    Column(verticalArrangement = Arrangement.SpaceBetween, modifier = Modifier.align(Alignment.TopCenter)) {
+        Row {
+            Box(
+                modifier = Modifier.size(50.dp, 50.dp)
+                    .clickable(
+                        onClick = {
+
+                         scope.launch {
+                             try {
+                                 network.sendWriter(
+                                     ByteCommands.GET_PLAYERS,
+                                     clickedPos?.latitude ?: 0.0,
+                                     clickedPos?.longitude ?: 0.0,
+                                     savedMeId
+                                 )
+                             } catch (e: Exception) {
+                                 Toast.makeText(context, "${e.message}", Toast.LENGTH_LONG).show()
+                             }
+                         }
+                        }
+                    )
+            ) {
+                Icon(painter = painterResource(id = R.drawable.baseline_add_circle_24), tint = Color.White, contentDescription = "BuildHere")
+            }
         }
+    }
     } //saved id login !true then:
         if (savedMeId == "") {
             LoginDialog(
@@ -259,19 +303,15 @@ fun MapItem(locationGet: locationGet) {
                 onLoginResult = { newToken, usedIp -> // Receives the token and the IP
                     if (!newToken.startsWith("Error")) {
                         scope.launch {
-                            // Save both to persistence
                             dataStoreManager.saveIdMe(newToken)
                             dataStoreManager.saveIp(usedIp)
+                            currentUrl = usedIp } } } )}
 
-                            // Ensure global var is updated for future TCP loops
-                            currentUrl = usedIp
-                        }
-                    }
-                }
-                )
-        }
     if (savedMeId == "FETCHING") {
         CircularProgressIndicator(modifier = Modifier.align(Alignment.Center) )
+    }
+    if (showUuidDialog) {
+        UuidLoginScreen(onDismiss = { showUuidDialog = false })
     }
     }
 }

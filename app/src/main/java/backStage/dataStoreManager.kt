@@ -1,4 +1,4 @@
-package behind_the_scenes
+package backStage
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -15,8 +15,9 @@ class DataStoreManager(private val context: Context) {
 
     companion object {
         val SERVER_IP_KEY = stringPreferencesKey("server_ip")
-        val YOU_YOU_ID_KEY = stringPreferencesKey("you_you_id")
+        val YOU_YOU_ID_KEY = stringPreferencesKey("UUID")
         val YOUR_NAME = stringPreferencesKey("mein_name")
+        val THEME_KEY = stringPreferencesKey("theme")
     }
     suspend fun saveIp(ip: String) {
         context.dataStore.edit { preferences ->
@@ -33,6 +34,11 @@ class DataStoreManager(private val context: Context) {
             preferences[YOUR_NAME] = zovut
         }
     }
+    suspend fun saveTheme(bTheme: String) {
+        context.dataStore.edit { preferences ->
+            preferences[THEME_KEY] = bTheme
+        }
+    }
     val getIp: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[SERVER_IP_KEY] ?: "127.0.0.1" // Default value
     }
@@ -41,5 +47,8 @@ class DataStoreManager(private val context: Context) {
     }
     val getMyZovut: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[YOUR_NAME] ?: "Default"
+    }
+    val getThemeRn: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[THEME_KEY] ?: "https://tiles.openfreemap.org/styles/fiord"
     }
 }

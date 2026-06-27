@@ -12,18 +12,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import behind_the_scenes.locationGet
+import backStage.locationGet
 import com.weaponizerzstudio.fieryescalation_gpsrts.R
-import io.github.dellisd.spatialk.geojson.Feature
-import io.github.dellisd.spatialk.geojson.FeatureCollection
-import io.github.dellisd.spatialk.geojson.Point
-import io.github.dellisd.spatialk.geojson.Position
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.image
-import org.maplibre.compose.layers.LineLayer
 import org.maplibre.compose.layers.SymbolLayer
-import org.maplibre.compose.sources.GeoJsonData
-import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.sources.rememberVectorSource
 
 
@@ -42,20 +35,7 @@ fun SymbolLayerTypeShi() {
         }
     }
 
-    val source = rememberVectorSource("https://api.maptiler.com/data/019e3593-0d6d-7e56-a13a-c6b9c8dbd3bc/features.json?key=pPewzJdKCkilrkBYJoZx")
-    // Will add dynamic coloring launch-like icon halo
-    // and color depending on what the other user's object might be
-    SymbolLayer(
-        id = "localPlayerLayer",
-        source = source,
-        iconImage = image(painterResource(R.drawable.baseline_person_24), drawAsSdf = true),
-        iconColor = const(Color.Green),
-        iconHaloColor = const(Color.Green),
-        iconHaloWidth = const(5.dp),
-        iconSize = const(1f),
-        minZoom = 0f,
-        maxZoom = 24f,
-    )
+
 }
 
 // just to remember this

@@ -1,15 +1,13 @@
-package ui_elements_misc
+package uiElementsAndMisc
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
@@ -21,19 +19,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Black
 import androidx.compose.ui.text.font.FontWeight
 import com.weaponizerzstudio.fieryescalation_gpsrts.R
 
-
+@Preview
 @Composable
-fun DsiplayItems(goBack : ()-> Unit) {
+fun DsiplayItems() {
     Column {
-        Text(text = "Click to go to greeter.",
-            modifier = Modifier.clickable{
-                goBack()
-            }
-        )
+        Text(text = "Click to go to greeter.")
 
         LazyColumn(content = {
             items(getCategoryList()) { item ->

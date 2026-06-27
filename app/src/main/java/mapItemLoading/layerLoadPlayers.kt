@@ -1,13 +1,13 @@
 package mapItemLoading
 
-import android.util.Log
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import fieryEntity.Entity
 import com.weaponizerzstudio.fieryescalation_gpsrts.R
+import fieryEntity.PlayerEntity
 import io.github.dellisd.spatialk.geojson.Feature
 import io.github.dellisd.spatialk.geojson.FeatureCollection
 import io.github.dellisd.spatialk.geojson.Point
@@ -17,10 +17,11 @@ import org.maplibre.compose.expressions.dsl.image
 import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
+import org.maplibre.compose.util.ClickResult
 
 @Composable
-fun LayerPlayers(entities: SnapshotStateList<Entity>) {
-    // 1. Generate GeoJSON and Log it
+fun LayerPlayers(entities: SnapshotStateList<PlayerEntity>) {
+
     val geoJsonData = remember(entities.toList()) {
         val featureCollection = FeatureCollection(
             features = entities.map { entity ->
@@ -28,23 +29,14 @@ fun LayerPlayers(entities: SnapshotStateList<Entity>) {
                     // MapLibre uses [Longitude, Latitude]
                     // If coordX is Lat and coordY is Long, this is correct.
                     geometry = Point(Position(entity.coordY, entity.coordX)),
-                    id = entity.id
+                    id = entity.subId
                 )
             }
         )
         val data = GeoJsonData.Features(featureCollection)
-
-        // LOGGING: This will show you exactly what is being sent to the map
-        Log.d("MAP_RENDER", "GeoJSON Update: ${entities.size} entities")
-        entities.forEach {
-            Log.d("MAP_RENDER", "Entity: ${it.id} at [Long:${it.coordY}, Lat:${it.coordX}]")
-        }
-
         data
     }
 
-    // 2. Use a unique key for the source to force refresh
-    // We use entities.size as a simple key, or entities.hashCode()
     val sourceP = rememberGeoJsonSource(
         data = geoJsonData
     )
@@ -52,22 +44,26 @@ fun LayerPlayers(entities: SnapshotStateList<Entity>) {
     SymbolLayer(
         id = "player-entities-layer",
         source = sourceP,
-        // Ensure this drawable exists and is valid
         iconImage = image(painterResource(R.drawable.baseline_person_24), drawAsSdf = true),
-        iconColor = const(Color.White), // Changed to Red for better visibility during debugging
+        iconColor = const(Color.White), // Changed to White bec its base for unowned entity
         iconAllowOverlap = const(true),
-        iconSize = const(2.0f), // Made slightly larger to see easier
+        iconSize = const(2.0f), // Made slightly larger to see easier (temporary change)
         iconIgnorePlacement = const(true),
         iconHaloColor = const(Color.Yellow),
-        iconHaloWidth = const(5.dp)
+        iconHaloWidth = const(5.dp),
+        onClick = { features ->
+            val chosenFeature = features.firstOrNull()
+            val entityId = chosenFeature?.id
+            ClickResult.Consume
+        }
     )
 }
 
-fun updateEntityList(entities: SnapshotStateList<Entity>, newEntity: Entity) {
-    val index = entities.indexOfFirst { it.id == newEntity.id }
+fun updateEntityList(entities: SnapshotStateList<PlayerEntity>, newPlayerEntity: PlayerEntity) {
+    val index = entities.indexOfFirst { it.subId == newPlayerEntity.subId }
     if (index != -1) {
-        entities[index] = newEntity // Updates existing player
+        entities[index] = newPlayerEntity // Updates existing player
     } else {
-        entities.add(newEntity)    // Adds new player
+        entities.add(newPlayerEntity)    // Adds new player
     }
 }

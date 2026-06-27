@@ -30,17 +30,22 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
+
     buildFeatures {
         compose = true
         viewBinding = true
     }
 }
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+    }
+}
+
 
 dependencies {
 
@@ -53,8 +58,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation("androidx.navigation:navigation-compose:2.9.8")
-    //implementation("org.osmdroid:osmdroid-android:6.1.20")
     implementation(libs.androidx.appcompat)
+    implementation(libs.core.ktx)
     implementation(libs.material)
     implementation(libs.androidx.annotation)
     implementation(libs.androidx.constraintlayout)
@@ -72,10 +77,11 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("androidx.datastore:datastore-preferences:1.2.1")
-    //implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
     implementation("org.maplibre.compose:maplibre-compose:0.11.1")
     implementation("org.maplibre.gl:android-sdk:13.1.0")
-    //implementation("com.maptiler:maptiler-sdk-kotlin:1.3.0")
-    //implementation("com.mapbox.maps:android-ndk27:11.23.1")
     implementation(libs.maplibre.composeMaterial3)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.network)
+    implementation(kotlin("test"))
 }

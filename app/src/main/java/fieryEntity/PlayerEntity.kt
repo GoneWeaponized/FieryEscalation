@@ -1,10 +1,9 @@
 package fieryEntity
 
-data class Entity(
-    val id: String,
+data class PlayerEntity(
+    val subId: String,
     val name: String,
-    val ownedBy: String,
-    val type: EntityType,
+    val type: TypeEntity,
     val coordX: Double,
     val coordY: Double,
 )

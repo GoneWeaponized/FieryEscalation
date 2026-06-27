@@ -1,4 +1,4 @@
-package ui_elements_misc
+package uiElementsAndMisc
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
@@ -11,9 +11,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import netTools_and_related.TcpClienter
-import netTools_and_related.currentPort
-import netTools_and_related.currentUrl
+import netTools.TcpClienter
+import netTools.currentPort
+import netTools.currentUrl
 import kotlinx.coroutines.launch
 
 @Composable

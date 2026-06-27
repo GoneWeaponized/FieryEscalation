@@ -1,6 +1,6 @@
 package fieryEntity
 
-enum class EntityType {
+enum class TypeEntity {
     TANK,
     PLAYER,
     AIRCRAFT

@@ -12,7 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import netTools_and_related.currentUrl
+import netTools.currentUrl
 
 /*
 Here I will be doing my login screen that contains the following:

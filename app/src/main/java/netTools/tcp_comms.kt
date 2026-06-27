@@ -1,4 +1,4 @@
-package netTools_and_related
+package netTools
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -10,7 +10,6 @@ import java.net.Socket
 var currentUrl: String = "127.0.0.1"
 var currentPort: Int = 5010
 // tcp_comms.kt
-// this is ai slop please be patient
 object TcpClienter {
     private var socket: Socket? = null
     private var writer: PrintWriter? = null
@@ -45,6 +44,6 @@ object TcpClienter {
     }
     suspend fun loginToServer(username: String, lat: Double?, long: Double?): String {
         val command = "LOGIN|$username|$lat|$long"
-        return fetchMessage(command) // Sends back the server respose.
+        return fetchMessage(command) // Sends back the server response.
     }
 }

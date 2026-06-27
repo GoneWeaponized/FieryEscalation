@@ -8,7 +8,7 @@ import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.Alignment
-import behind_the_scenes.locationGet
+import backStage.locationGet
 import com.weaponizerzstudio.fieryescalation_gpsrts.ui.theme.FieryEscalationGpsRtsTheme
 
 class MainActivity : ComponentActivity() {
@@ -20,6 +20,7 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
         locGetterThing = locationGet(this)
+        suspend {}
         setContent {
             FieryEscalationGpsRtsTheme {
                 Column (
