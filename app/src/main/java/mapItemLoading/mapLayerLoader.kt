@@ -8,16 +8,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
-import backStage.locationGet
-import com.weaponizerzstudio.fieryescalation_gpsrts.R
-import org.maplibre.compose.expressions.dsl.const
-import org.maplibre.compose.expressions.dsl.image
-import org.maplibre.compose.layers.SymbolLayer
-import org.maplibre.compose.sources.rememberVectorSource
+import backStage.LocationGet
 
 
 @Composable
@@ -28,7 +20,7 @@ fun SymbolLayerTypeShi() {
     var myLong by remember { mutableStateOf<Double?>(null) }
 
     LaunchedEffect(Unit) {
-        val locator = locationGet(context)
+        val locator = LocationGet(context)
         locator.requestLocationUpdates { location ->
             myLat = location.latitude
             myLong = location.longitude

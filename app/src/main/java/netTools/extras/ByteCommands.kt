@@ -1,8 +1,7 @@
 package netTools.extras
 
 enum class ByteCommands {
-    PING,
+    LOGIN,
     GET_PLAYERS,
-    REQ_CONSTRUCTION,
-    LOGIN
+    REQ_CONSTRUCTION
 }

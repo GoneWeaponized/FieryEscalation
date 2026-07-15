@@ -8,19 +8,25 @@ import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.Alignment
-import backStage.locationGet
+import androidx.lifecycle.lifecycleScope
+import backStage.DataStoreManager
+import backStage.LocationGet
+import backStage.veiwModels.NetworkViewModel
 import com.weaponizerzstudio.fieryescalation_gpsrts.ui.theme.FieryEscalationGpsRtsTheme
+import kotlinx.coroutines.launch
+import netTools.FieryNetwork
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var locGetterThing: locationGet
+    private lateinit var locGetterThing: LocationGet
+
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
-        locGetterThing = locationGet(this)
-        suspend {}
+        locGetterThing = LocationGet(this)
+        DataStoreManager(this)
         setContent {
             FieryEscalationGpsRtsTheme {
                 Column (

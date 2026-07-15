@@ -1,69 +1,84 @@
 package mapItemLoading
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.weaponizerzstudio.fieryescalation_gpsrts.R
-import fieryEntity.PlayerEntity
-import io.github.dellisd.spatialk.geojson.Feature
-import io.github.dellisd.spatialk.geojson.FeatureCollection
-import io.github.dellisd.spatialk.geojson.Point
-import io.github.dellisd.spatialk.geojson.Position
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.image
 import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
-import org.maplibre.compose.util.ClickResult
+import org.maplibre.spatialk.geojson.Feature
+import org.maplibre.spatialk.geojson.FeatureCollection
+import org.maplibre.spatialk.geojson.Point
+import org.maplibre.spatialk.geojson.Position
 
 @Composable
-fun LayerPlayers(entities: SnapshotStateList<PlayerEntity>) {
+fun LayerPlayers() {
+    val pSource = rememberGeoJsonSource(
+        data = GeoJsonData.Features(
+            FeatureCollection(
 
-    val geoJsonData = remember(entities.toList()) {
-        val featureCollection = FeatureCollection(
-            features = entities.map { entity ->
-                Feature(
-                    // MapLibre uses [Longitude, Latitude]
-                    // If coordX is Lat and coordY is Long, this is correct.
-                    geometry = Point(Position(entity.coordY, entity.coordX)),
-                    id = entity.subId
-                )
-            }
+                Feature(geometry = Point(Position(111.5170, 25.0478)), properties = null),
+                Feature(geometry = Point(Position(121.5170, 25.0478)), properties = null),
+            )
         )
-        val data = GeoJsonData.Features(featureCollection)
-        data
-    }
-
-    val sourceP = rememberGeoJsonSource(
-        data = geoJsonData
     )
-
     SymbolLayer(
-        id = "player-entities-layer",
-        source = sourceP,
+        id = "PlayerLayer",
+        source = pSource,
         iconImage = image(painterResource(R.drawable.baseline_person_24), drawAsSdf = true),
-        iconColor = const(Color.White), // Changed to White bec its base for unowned entity
-        iconAllowOverlap = const(true),
-        iconSize = const(2.0f), // Made slightly larger to see easier (temporary change)
-        iconIgnorePlacement = const(true),
-        iconHaloColor = const(Color.Yellow),
-        iconHaloWidth = const(5.dp),
-        onClick = { features ->
-            val chosenFeature = features.firstOrNull()
-            val entityId = chosenFeature?.id
-            ClickResult.Consume
-        }
+        iconColor = const(Color.White),
+        iconSize = const(1.5f),
+        iconHaloWidth = const(8.dp),
+        iconHaloColor = const(Color.Red)
     )
 }
 
-fun updateEntityList(entities: SnapshotStateList<PlayerEntity>, newPlayerEntity: PlayerEntity) {
-    val index = entities.indexOfFirst { it.subId == newPlayerEntity.subId }
-    if (index != -1) {
-        entities[index] = newPlayerEntity // Updates existing player
-    } else {
-        entities.add(newPlayerEntity)    // Adds new player
-    }
-}
+//    val geoJsonData = remember(entities.toList()) {
+//        val featureCollection = FeatureCollection(
+//            features = entities.map { entity ->
+//                Feature(
+//                    // MapLibre uses [Longitude, Latitude]
+//                    // If coordX is Lat and coordY is Long, this is correct.
+//                    geometry = Point(Position(entity.coordY, entity.coordX)),
+//                    id = entity.subId
+//                )
+//            }
+//        )
+//        val data = GeoJsonData.Features(featureCollection)
+//        data
+//    }
+//
+//    val sourceP = rememberGeoJsonSource(
+//        data = geoJsonData
+//    )
+//
+//    SymbolLayer(
+//        id = "player-entities-layer",
+//        source = sourceP,
+//        iconImage = image(painterResource(R.drawable.baseline_person_24), drawAsSdf = true),
+//        iconColor = const(Color.White), // Changed to White bec its base for unowned entity
+//        iconAllowOverlap = const(true),
+//        iconSize = const(2.0f), // Made slightly larger to see easier (temporary change)
+//        iconIgnorePlacement = const(true),
+//        iconHaloColor = const(Color.Yellow),
+//        iconHaloWidth = const(5.dp),
+//        onClick = { features ->
+//            val chosenFeature = features.firstOrNull()
+//            val entityId = chosenFeature?.id
+//            ClickResult.Consume
+//        }
+//    )
+//}
+//
+//fun updateEntityList(entities: SnapshotStateList<PlayerEntity>, newPlayerEntity: PlayerEntity) {
+//    val index = entities.indexOfFirst { it.subId == newPlayerEntity.subId }
+//    if (index != -1) {
+//        entities[index] = newPlayerEntity // Updates existing player
+//    } else {
+//        entities.add(newPlayerEntity)    // Adds new player
+//    }
+//}

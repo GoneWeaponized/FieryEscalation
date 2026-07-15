@@ -1,5 +1,6 @@
 package uiElementsAndMisc
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -11,24 +12,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import netTools.TcpClienter
+import com.weaponizerzstudio.fieryescalation_gpsrts.network
 import netTools.currentPort
 import netTools.currentUrl
 import kotlinx.coroutines.launch
+import netTools.extras.ByteCommands
 
 @Composable
 fun LoginDialog(
     myLat: Double?,
     myLong: Double?,
-    initalIp: String = "127.0.0.1",
-    onLoginResult: (String, String) -> Unit
+    initialIp: String = "127.0.0.1"
 ) {
     var username by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
-    var ipInput by remember { mutableStateOf(initalIp) }
+    var ipInput by remember { mutableStateOf(initialIp) }
+
     AlertDialog(
         onDismissRequest = {},
-        title = { Text("Some Login thing idk") },
+        title = { Text("Create a FEscalation User") },
         text = {
             Column {
                 Text("Connection Settings:")
@@ -38,32 +40,41 @@ fun LoginDialog(
                     label = { Text("Server IP") },
                     singleLine = true
                 )
-                Text("Enter username to enter the divine warmonger's cabin:")
+                Text("Enter username: (make sure location adn perms are enabled)")
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
                     singleLine = true
                 )
-
             }
         },
         confirmButton = {
-            Button(onClick = {
-                scope.launch {
-                    val rawIp = ipInput.trim()
-                    if (rawIp.contains(":")) {
-                        val parts = rawIp.split(":")
-                        currentUrl = parts[0]
-                        currentPort = parts[1].toIntOrNull() ?: 5010
-                    } else {
-                        currentUrl = "127.0.0.1"
-                        currentPort = 5010
+            Button(
+                onClick = {
+                    scope.launch {
+                        val rawIp = ipInput.trim()
+                        if (rawIp.contains(":")) {
+                            val parts = rawIp.split(":")
+                            currentUrl = parts[0]
+                            currentPort = parts[1].toIntOrNull() ?: 5010
+                        } else {
+                            currentUrl = rawIp
+                            currentPort = 5010
+                        }
+                        if (myLat != null && myLong != null) {
+                            try {
+                                if (!network.isConnected) {
+                                    network.connect()
+                                }
+                                network.loginWrite(username, myLat, myLong, ByteCommands.LOGIN)
+                            } catch (e: Exception) {
+                                Log.e("LoginError", "Error during login: ${e.message}")
+                            }
+                        }
                     }
-
-                    val result = TcpClienter.loginToServer(username, myLat, myLong)
-                    onLoginResult(result, rawIp)
-                }
-            }) {
+                },
+                enabled = username.isNotBlank() && myLat != null && myLong != null
+            ) {
                 Text("Connect")
             }
         })

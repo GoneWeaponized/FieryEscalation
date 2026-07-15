@@ -2,17 +2,28 @@ package com.weaponizerzstudio.fieryescalation_gpsrts
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import backStage.veiwModels.NetworkViewModel
 import netTools.currentUrl
+import netTools.extras.ByteCommands
+import org.maplibre.compose.expressions.dsl.textVariableAnchorOffset
 
 /*
 Here I will be doing my login screen that contains the following:
@@ -28,19 +39,16 @@ Just a login ID and Account backup code that will be generated - but that too is
 @Preview(showSystemUi = true)
 @Composable
 fun LoginScreen0() {
+    LaunchedEffect(Unit) {
+        NetworkViewModel().connect()
+    }
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            var urlServe : String by remember { mutableStateOf("URL HERE") }
-            val mainText = "Connection Screen"
-            TextField(
-                value = urlServe,
-                onValueChange = {urlServe = it}
-            )
-            Text(text = mainText, fontSize = 18.sp)
-            Text(text = urlServe, fontSize = 20.sp)
-            currentUrl = urlServe
-            AppNavigation()
+            Text(text = "ji there", modifier = Modifier.size(60.dp).width(80.dp).height(80.dp))
+            Button(onClick = {
+                NetworkViewModel().send(ByteCommands.GET_PLAYERS, lt = 45.878348, ln = 37.872343, uu = "f28fb523-a082-4184-9591-be4959c939b2")
+            }) { Text(text = "CLICK") }
         }
 }

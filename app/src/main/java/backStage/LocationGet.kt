@@ -11,8 +11,8 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.Priority
 
 
-@Suppress("ClassName")
-class locationGet(context: Context) {
+
+class LocationGet(context: Context) {
     private val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context.applicationContext)
     @SuppressLint("MissingPermission")
     fun getLastLoc(onResult: (Location?) -> Unit) {

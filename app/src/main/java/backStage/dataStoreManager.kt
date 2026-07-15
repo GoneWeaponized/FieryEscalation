@@ -14,10 +14,14 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 class DataStoreManager(private val context: Context) {
 
     companion object {
+        lateinit var instance: DataStoreManager
         val SERVER_IP_KEY = stringPreferencesKey("server_ip")
-        val YOU_YOU_ID_KEY = stringPreferencesKey("UUID")
+        val UUID_KEY = stringPreferencesKey("UUID")
         val YOUR_NAME = stringPreferencesKey("mein_name")
         val THEME_KEY = stringPreferencesKey("theme")
+    }
+    init {
+        instance = this
     }
     suspend fun saveIp(ip: String) {
         context.dataStore.edit { preferences ->
@@ -26,7 +30,7 @@ class DataStoreManager(private val context: Context) {
     }
     suspend fun saveIdMe(uid: String) {
         context.dataStore.edit { preferences ->
-            preferences[YOU_YOU_ID_KEY] = uid
+            preferences[UUID_KEY] = uid
         }
     }
     suspend fun saveNameMe(zovut: String) {
@@ -43,12 +47,12 @@ class DataStoreManager(private val context: Context) {
         preferences[SERVER_IP_KEY] ?: "127.0.0.1" // Default value
     }
     val getMyId: Flow<String> = context.dataStore.data.map { preferences ->
-        preferences[YOU_YOU_ID_KEY] ?: ""
+        preferences[UUID_KEY] ?: ""
     }
     val getMyZovut: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[YOUR_NAME] ?: "Default"
     }
     val getThemeRn: Flow<String> = context.dataStore.data.map { preferences ->
-        preferences[THEME_KEY] ?: "https://tiles.openfreemap.org/styles/fiord"
+        preferences[THEME_KEY] ?: "https://tiles.openfreemap.org/styles/fiord" // fall back to this
     }
 }

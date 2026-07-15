@@ -1,9 +1,6 @@
 package com.weaponizerzstudio.fieryescalation_gpsrts
-//I named it test file at first because I had no idea what I was planning to do here at first.
 
-/* Behind the scenes is where I keep the most horrible codes
-in case you, my reader, want to destroy your eyes please go ahead and read that. */
-
+import android.annotation.SuppressLint
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -26,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -40,16 +36,13 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import backStage.DataStoreManager
-import backStage.locationGet
-import backStage.parseTcpToEntity
-import fieryEntity.PlayerEntity
-import io.github.dellisd.spatialk.geojson.Position
+import backStage.LocationGet
+import backStage.veiwModels.NetworkViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mapItemLoading.LayerPlayers
-import mapItemLoading.updateEntityList
-import netTools.FieryNetwork
-import netTools.TcpClienter
 import netTools.currentPort
 import netTools.currentUrl
 import netTools.extras.ByteCommands
@@ -63,67 +56,93 @@ import org.maplibre.compose.map.RenderOptions
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.compose.style.rememberStyleState
 import org.maplibre.compose.util.ClickResult
+import org.maplibre.spatialk.geojson.Position
 import uiElementsAndMisc.LoginDialog
 import uiElementsAndMisc.UuidLoginScreen
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
+val network = NetworkViewModel()
+
+@SuppressLint("SuspiciousIndentation")
 @Composable
-fun MapItem(locationGet: locationGet) {
+fun MapItem(locationGet: LocationGet) {
     //Here gonna define the variables.
     var showUuidDialog by remember { mutableStateOf(false) }
     var myLat by remember { mutableStateOf<Double?>(null) }
     var myLong by remember { mutableStateOf<Double?>(null) }
     var clickedPos by remember { mutableStateOf<Position?>(null)}
-    val network = FieryNetwork()
-
-    LaunchedEffect(Unit) {
-        locationGet.requestLocationUpdates { location ->
-            myLat = location.latitude
-            myLong = location.longitude
-        }
-    }
-
-
-    val focusManager = LocalFocusManager.current
     var theBoolThing by remember { mutableStateOf(false) }
+
+    val connectionState by network.connectionState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val dataStoreManager = remember { DataStoreManager(context) }
     val scope = rememberCoroutineScope()
     val savedIP by dataStoreManager.getIp.collectAsState(initial = "")
-    val savedTheme by dataStoreManager.getThemeRn.collectAsState(initial = "https://tiles.openfreemap.org/styles/fiord")
+    val savedTheme by dataStoreManager.getThemeRn.collectAsState(initial = "$currentUrl/get-map")
     var urlString : String by remember { mutableStateOf("") }
-    val savedMeId by dataStoreManager.getMyId.collectAsState(initial = "FETCHING")
-    LaunchedEffect(savedIP) { urlString = savedIP; currentUrl = savedIP}
-    //will probably load JSON data
+    val savedUUID by dataStoreManager.getMyId.collectAsState(initial = "FETCHING")
+    val focusManager = LocalFocusManager.current
+
     //====================URL PATCHING================================
-    val entities = remember { mutableStateListOf<PlayerEntity>() }
     LaunchedEffect(savedIP) {
+        urlString = savedIP
         if (savedIP.isNotEmpty()) {
             if (savedIP.contains(":")) {
                 val parts = savedIP.split(":")
                 currentUrl = parts[0]
                 currentPort = parts[1].toIntOrNull() ?: 5010
             } else {
-                currentUrl = "127.0.0.1"
+                currentUrl = savedIP
                 currentPort = 5010
             }
         }
     }
-    //================CALLING PLAYERS================================
 
+    //============ LOCATION ==========================
+    LaunchedEffect(Unit) {
+        locationGet.requestLocationUpdates { location ->
+            myLat = location.latitude
+            myLong = location.longitude } }
 
-    //I have a bad feeling because it's turning into a monolith :skull:
+    //============ NETWORK INITIALIZATION ==========================
+    LaunchedEffect(connectionState) {
+        if (connectionState) {
+            try {
+                network.readStart()
+            } catch (e: Exception) {
+                Log.e("NetworkRead", "Error in readStart: ${e.message}")
+            }
+        }
+    }
+
+    LaunchedEffect(savedUUID) {
+        if (savedUUID != "" && savedUUID != "FETCHING") {
+            network.connect()
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize() .pointerInput(Unit) {
         detectTapGestures(onTap = {
             focusManager.clearFocus()
         })
     }) {
-        if (savedMeId != "" && savedMeId != "FETCHING") {
+        if (savedUUID != "" && savedUUID != "FETCHING") {
+        val cameraState = rememberCameraState(CameraPosition(target = Position(29.265910, 52.049274), zoom = 2.5))
+            LaunchedEffect(savedUUID, connectionState) {
+                if (connectionState) {
+                    Log.d("network state: ", connectionState.toString())
+                    while (true) {
+                        val lat = myLat
+                        val lng = myLong
+                        if (lat != null && lng != null) {
+                            network.send(ByteCommands.GET_PLAYERS, lt = lat, ln = lng, uu = savedUUID)
+                        }
+                        delay(1.seconds)
+                    }
+                }
+            }
             //=================MAP STUFF========================================
-        val cameraState =
-            rememberCameraState(CameraPosition(target = Position(29.265910, 52.049274), zoom = 1.0))
-        MaplibreMap(
+            MaplibreMap(
             zoomRange = 2.5f..22f,
             baseStyle = BaseStyle.Uri(savedTheme),
             cameraState = cameraState,
@@ -147,12 +166,16 @@ fun MapItem(locationGet: locationGet) {
             ),
             onMapClick = {pos, _ ->
                 clickedPos = pos
+                scope.launch { cameraState.animateTo(finalPosition = CameraPosition(target = Position(pos.longitude, pos.latitude), zoom = 5.0),
+                    duration = 0.65.seconds
+                )} //Launch style click to move to. Implementation of dynamic zoom values later.
+
                ClickResult.Consume},
-        ) { //Map layer stuff loader
-            //SymbolLayerTypeShi()
-            LayerPlayers(entities = entities)
-        }
-        // TOP LAYER ROW
+        )
+        // MAP LAYERS
+        { LayerPlayers() }
+        // TOP ROW
+        // To add: 1. Connection, zoom button, ID manager button, theme change, money , etc...
     Column(verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.align(Alignment.TopCenter)) {
         Row {
             //=========================THEME SWITCH====================
@@ -166,26 +189,18 @@ fun MapItem(locationGet: locationGet) {
                         val newTheme = if (theBoolThing) {
                             "https://tiles.openfreemap.org/styles/fiord"
                         } else {
-                            "https://tiles.openfreemap.org/styles/positron"
+                            "https://5df8-2409-40c4-2032-5dbd-96da-f746-8772-b705.ngrok-free.app/get-map-style"
                         }
-                        scope.launch {
-                            dataStoreManager.saveTheme(newTheme)
-                        }
-                    }
-                )
-                //.align(Alignment.TopStart)
+                        scope.launch { dataStoreManager.saveTheme(newTheme)}})
                 .background(Color.DarkGray.copy(0.3f), shape = RoundedCornerShape(0.dp)),
                 contentAlignment = Alignment.Center) {
-                //Text(text = "Change Theme", color = Color.White)
-                Icon(
+                    Icon(
                     painter = painterResource(id = R.drawable.outline_brightness_6_24),
                     contentDescription = "Change Theme",
                     tint = Color.White
-                )
+                    )
             }
             // ========================IP CONNECT================
-
-
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -274,15 +289,14 @@ fun MapItem(locationGet: locationGet) {
                 modifier = Modifier.size(50.dp, 50.dp)
                     .clickable(
                         onClick = {
-
                          scope.launch {
                              try {
-                                 network.sendWriter(
-                                     ByteCommands.GET_PLAYERS,
-                                     clickedPos?.latitude ?: 0.0,
-                                     clickedPos?.longitude ?: 0.0,
-                                     savedMeId
-                                 )
+                                 //network.send(
+                                 //    cmd = ByteCommands.GET_PLAYERS,
+                                 //    lt = clickedPos?.latitude ?: 0.0,
+                                 //    ln = clickedPos?.longitude ?: 0.0,
+                                 //    uu = savedMeId,
+                                 //)
                              } catch (e: Exception) {
                                  Toast.makeText(context, "${e.message}", Toast.LENGTH_LONG).show()
                              }
@@ -295,19 +309,14 @@ fun MapItem(locationGet: locationGet) {
         }
     }
     } //saved id login !true then:
-        if (savedMeId == "") {
+        if (savedUUID == "") {
             LoginDialog(
                 myLat = myLat,
                 myLong = myLong,
-                initalIp = savedIP,
-                onLoginResult = { newToken, usedIp -> // Receives the token and the IP
-                    if (!newToken.startsWith("Error")) {
-                        scope.launch {
-                            dataStoreManager.saveIdMe(newToken)
-                            dataStoreManager.saveIp(usedIp)
-                            currentUrl = usedIp } } } )}
+                initialIp = savedIP
+            )}
 
-    if (savedMeId == "FETCHING") {
+    if (savedUUID == "FETCHING") {
         CircularProgressIndicator(modifier = Modifier.align(Alignment.Center) )
     }
     if (showUuidDialog) {

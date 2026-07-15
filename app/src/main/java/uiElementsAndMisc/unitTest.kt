@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
+import backStage.veiwModels.NetworkViewModel
 import kotlinx.coroutines.launch
 import netTools.FieryNetwork
 import netTools.extras.ByteCommands
@@ -27,7 +28,9 @@ fun UnitTEst() {
             onClick = {
                 scope.launch {
                     try {
-                        FieryNetwork().sendWriter(command = ByteCommands.GET_PLAYERS, lat = 34.34332, long = 23.8867565, uuid = "b1968097-e099-4195-8b9d-d586d82d816a")
+
+
+                        NetworkViewModel().send(cmd = ByteCommands.GET_PLAYERS, lt = 34.34332, ln = 23.8867565, uu = "b1968097-e099-4195-8b9d-d586d82d816a")
 
                     } catch (e: Exception) {
                         Log.e("UnitTEst", "Network error", e)

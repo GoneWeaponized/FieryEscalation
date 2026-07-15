@@ -13,7 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import backStage.DataStoreManager
-import backStage.DataStoreManager.Companion.YOU_YOU_ID_KEY
+import backStage.DataStoreManager.Companion.UUID_KEY
 import kotlinx.coroutines.launch
 
 @Composable
@@ -22,7 +22,7 @@ fun UuidLoginScreen(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val dataStoreManager = remember { DataStoreManager(context) }
-    val savedUuid by dataStoreManager.getMyId.collectAsState(initial = "$YOU_YOU_ID_KEY")
+    val savedUuid by dataStoreManager.getMyId.collectAsState(initial = "$UUID_KEY")
     AlertDialog(
         onDismissRequest = {},
         title = { Text("UUID Login.")},
