@@ -5,6 +5,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.weaponizerzstudio.fieryescalation_gpsrts.R
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.image
 import org.maplibre.compose.layers.SymbolLayer
@@ -12,17 +15,24 @@ import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.spatialk.geojson.Feature
 import org.maplibre.spatialk.geojson.FeatureCollection
+import org.maplibre.spatialk.geojson.Geometry
 import org.maplibre.spatialk.geojson.Point
-import org.maplibre.spatialk.geojson.Position
 
 @Composable
 fun LayerPlayers() {
+    val players = entityParser.players
     val pSource = rememberGeoJsonSource(
         data = GeoJsonData.Features(
-            FeatureCollection(
-
-                Feature(geometry = Point(Position(111.5170, 25.0478)), properties = null),
-                Feature(geometry = Point(Position(121.5170, 25.0478)), properties = null),
+            FeatureCollection<Geometry, JsonObject?>(
+                features = players.filter { !it.position.latitude.isNaN() && !it.position.longitude.isNaN() }.map { player ->
+                    Feature(
+                        geometry = Point(player.position),
+                        properties = buildJsonObject {
+                            put("subId", JsonPrimitive(player.subId))
+                            put("name", JsonPrimitive(player.name))
+                        }
+                    )
+                }
             )
         )
     )

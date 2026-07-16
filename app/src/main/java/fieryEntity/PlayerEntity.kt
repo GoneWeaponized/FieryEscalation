@@ -1,9 +1,10 @@
 package fieryEntity
 
+import org.maplibre.spatialk.geojson.Position
+
 data class PlayerEntity(
     val subId: String,
-    val name: String,
+    var name: String,
     val type: TypeEntity,
-    val coordX: Double,
-    val coordY: Double,
+    var position: Position
 )

@@ -1,6 +1,7 @@
 package backStage
 
 import java.nio.ByteBuffer
+import mapItemLoading.entityParser
 
 suspend fun byteParser(data: ByteArray) {
        val dsm = DataStoreManager.instance
@@ -9,7 +10,7 @@ suspend fun byteParser(data: ByteArray) {
 
        when(type) {
               0 -> loginParseID(dsm = dsm).changeUUID(bufData)
-              //1 ->
+              1 -> entityParser.parseAllPlayers(bufData)
               else -> return
        }
 }

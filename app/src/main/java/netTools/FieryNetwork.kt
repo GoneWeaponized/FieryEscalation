@@ -89,7 +89,6 @@ class FieryNetwork {
                     val packet = ByteArray(length - 2)
                     buffer.get(packet)
                     byteParser(packet)
-                    Log.d("Dump of data", packet.contentToString())
                 } else {
                     buffer.reset()
                     break

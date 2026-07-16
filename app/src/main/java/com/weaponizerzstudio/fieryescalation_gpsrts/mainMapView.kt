@@ -42,6 +42,7 @@ import backStage.LocationGet
 import backStage.veiwModels.NetworkViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import mapItemLoading.LayerOfPlayers
 import mapItemLoading.LayerPlayers
 import netTools.currentPort
 import netTools.currentUrl
@@ -57,6 +58,10 @@ import org.maplibre.compose.style.BaseStyle
 import org.maplibre.compose.style.rememberStyleState
 import org.maplibre.compose.util.ClickResult
 import org.maplibre.spatialk.geojson.Position
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import org.maplibre.spatialk.geojson.Feature
+import uiElementsAndMisc.EntityDetailView
 import uiElementsAndMisc.LoginDialog
 import uiElementsAndMisc.UuidLoginScreen
 import kotlin.time.Duration.Companion.seconds
@@ -72,6 +77,7 @@ fun MapItem(locationGet: LocationGet) {
     var myLong by remember { mutableStateOf<Double?>(null) }
     var clickedPos by remember { mutableStateOf<Position?>(null)}
     var theBoolThing by remember { mutableStateOf(false) }
+    var clickedPlayer by remember { mutableStateOf<Feature<*, JsonObject?>?>(null) }
 
     val connectionState by network.connectionState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -121,11 +127,7 @@ fun MapItem(locationGet: LocationGet) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize() .pointerInput(Unit) {
-        detectTapGestures(onTap = {
-            focusManager.clearFocus()
-        })
-    }) {
+    Box(modifier = Modifier.fillMaxSize()) {
         if (savedUUID != "" && savedUUID != "FETCHING") {
         val cameraState = rememberCameraState(CameraPosition(target = Position(29.265910, 52.049274), zoom = 2.5))
             LaunchedEffect(savedUUID, connectionState) {
@@ -165,15 +167,23 @@ fun MapItem(locationGet: LocationGet) {
                 ),
             ),
             onMapClick = {pos, _ ->
+                Log.d("MapClick", "Map background clicked at $pos")
+                focusManager.clearFocus()
                 clickedPos = pos
-                scope.launch { cameraState.animateTo(finalPosition = CameraPosition(target = Position(pos.longitude, pos.latitude), zoom = 5.0),
+                clickedPlayer = null
+                scope.launch { cameraState.animateTo(finalPosition = CameraPosition(target = Position(pos.longitude, pos.latitude), zoom = cameraState.position.zoom),
                     duration = 0.65.seconds
                 )} //Launch style click to move to. Implementation of dynamic zoom values later.
 
-               ClickResult.Consume},
+               ClickResult.Pass},
         )
         // MAP LAYERS
-        { LayerPlayers() }
+        { 
+            LayerOfPlayers(onPlayerClick = { 
+                Log.d("MapClick", "Player clicked: ${it?.properties}")
+                clickedPlayer = it 
+            })
+        }
         // TOP ROW
         // To add: 1. Connection, zoom button, ID manager button, theme change, money , etc...
     Column(verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.align(Alignment.TopCenter)) {
@@ -321,6 +331,16 @@ fun MapItem(locationGet: LocationGet) {
     }
     if (showUuidDialog) {
         UuidLoginScreen(onDismiss = { showUuidDialog = false })
+    }
+
+    if (clickedPlayer != null) {
+        val name = clickedPlayer?.properties?.get("name")?.jsonPrimitive?.content ?: "Unknown"
+        EntityDetailView(
+            name = name,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 64.dp)
+        )
     }
     }
 }

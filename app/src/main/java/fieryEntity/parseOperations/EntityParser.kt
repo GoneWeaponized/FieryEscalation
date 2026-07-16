@@ -1,12 +1,16 @@
 package fieryEntity.parseOperations
 
+import androidx.compose.runtime.mutableStateListOf
 import fieryEntity.PlayerEntity
 import fieryEntity.TypeEntity
-import kotlinx.io.bytestring.getByteString
+import org.maplibre.spatialk.geojson.Position
 import java.nio.ByteBuffer
 
 class EntityParser {
+
+    val players = mutableStateListOf<PlayerEntity>()
     val subIDlength= ByteArray(16)
+
     /*
     data structure:
     double for lat
@@ -30,17 +34,26 @@ class EntityParser {
             subId = subID,
             name = name,
             type = TypeEntity.PLAYER,
-            coordX = latitude,
-            coordY = longitude
+            position = Position(longitude = longitude, latitude)
         )
     }
 
     fun parseAllPlayers(data: ByteBuffer): List<PlayerEntity> {
-        val players = mutableListOf<PlayerEntity>()
+        while (data.remaining() >= 34) /*since 34 is the least that can happen*/ {
 
-        //fixed part is 34 since that's the least which would arrive.
-        while (data.remaining() >= 34) {
-            players.add(parsePlayer(data))
+            val newPlayer = parsePlayer(data)
+
+            if (newPlayer.position.latitude.isNaN() || newPlayer.position.longitude.isNaN()) {
+                continue
+            }
+
+            val index = players.indexOfFirst { it.subId == newPlayer.subId }
+
+            if (index != -1) {
+                players[index] = newPlayer
+            } else {
+                players.add(newPlayer)
+            }
         }
         return players
     }
