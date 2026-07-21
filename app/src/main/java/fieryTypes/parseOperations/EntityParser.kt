@@ -1,8 +1,8 @@
-package fieryEntity.parseOperations
+package fieryTypes.parseOperations
 
 import androidx.compose.runtime.mutableStateListOf
-import fieryEntity.PlayerEntity
-import fieryEntity.TypeEntity
+import fieryTypes.entities.PlayerEntity
+import fieryTypes.TypeEntity
 import org.maplibre.spatialk.geojson.Position
 import java.nio.ByteBuffer
 

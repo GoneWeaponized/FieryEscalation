@@ -1,4 +1,4 @@
-package fieryEntity
+package fieryTypes
 
 enum class TypeEntity {
     TANK,

@@ -11,9 +11,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
-import backStage.veiwModels.NetworkViewModel
+import backStage.viewModels.NetworkViewModel
 import kotlinx.coroutines.launch
-import netTools.FieryNetwork
 import netTools.extras.ByteCommands
 
 @Preview

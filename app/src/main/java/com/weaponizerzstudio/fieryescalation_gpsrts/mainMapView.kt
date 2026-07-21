@@ -2,15 +2,15 @@ package com.weaponizerzstudio.fieryescalation_gpsrts
 
 import android.annotation.SuppressLint
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -39,11 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import backStage.DataStoreManager
 import backStage.LocationGet
-import backStage.veiwModels.NetworkViewModel
+import backStage.viewModels.NetworkViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mapItemLoading.LayerOfPlayers
-import mapItemLoading.LayerPlayers
 import netTools.currentPort
 import netTools.currentUrl
 import netTools.extras.ByteCommands
@@ -64,6 +62,9 @@ import org.maplibre.spatialk.geojson.Feature
 import uiElementsAndMisc.EntityDetailView
 import uiElementsAndMisc.LoginDialog
 import uiElementsAndMisc.UuidLoginScreen
+import uiElementsAndMisc.bottomBar.BottomBar
+import uiElementsAndMisc.bottomBar.InventoryViewUI
+import fieryTypes.parseOperations.InvParse
 import kotlin.time.Duration.Companion.seconds
 
 val network = NetworkViewModel()
@@ -78,6 +79,7 @@ fun MapItem(locationGet: LocationGet) {
     var clickedPos by remember { mutableStateOf<Position?>(null)}
     var theBoolThing by remember { mutableStateOf(false) }
     var clickedPlayer by remember { mutableStateOf<Feature<*, JsonObject?>?>(null) }
+    var showInventory by remember { mutableStateOf(false) }
 
     val connectionState by network.connectionState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -115,6 +117,7 @@ fun MapItem(locationGet: LocationGet) {
         if (connectionState) {
             try {
                 network.readStart()
+
             } catch (e: Exception) {
                 Log.e("NetworkRead", "Error in readStart: ${e.message}")
             }
@@ -138,6 +141,7 @@ fun MapItem(locationGet: LocationGet) {
                         val lng = myLong
                         if (lat != null && lng != null) {
                             network.send(ByteCommands.GET_PLAYERS, lt = lat, ln = lng, uu = savedUUID)
+                            network.loginEvn(ByteCommands.REQ_INV, uu = savedUUID)
                         }
                         delay(1.seconds)
                     }
@@ -149,6 +153,7 @@ fun MapItem(locationGet: LocationGet) {
             baseStyle = BaseStyle.Uri(savedTheme),
             cameraState = cameraState,
             styleState = rememberStyleState(),
+            modifier = Modifier,
             options = MapOptions(
                 ornamentOptions = OrnamentOptions(
                     isCompassEnabled = false,
@@ -278,6 +283,8 @@ fun MapItem(locationGet: LocationGet) {
 
             Box(
                 modifier = Modifier
+                    .background(
+                        Color.DarkGray.copy(0.3f), shape = RoundedCornerShape(0.dp))
                     .size(50.dp, 50.dp)
                     .padding(top = 0.dp)
                     .clickable(
@@ -287,37 +294,15 @@ fun MapItem(locationGet: LocationGet) {
             ) {
                 Icon(painter = painterResource(id = R.drawable.outline_id_card_24), tint = Color.White, contentDescription = "Show UUID")
             }
-
-
         }
     }
             // BOTTOM BAR
-
-    Column(verticalArrangement = Arrangement.SpaceBetween, modifier = Modifier.align(Alignment.TopCenter)) {
-        Row {
-            Box(
-                modifier = Modifier.size(50.dp, 50.dp)
-                    .clickable(
-                        onClick = {
-                         scope.launch {
-                             try {
-                                 //network.send(
-                                 //    cmd = ByteCommands.GET_PLAYERS,
-                                 //    lt = clickedPos?.latitude ?: 0.0,
-                                 //    ln = clickedPos?.longitude ?: 0.0,
-                                 //    uu = savedMeId,
-                                 //)
-                             } catch (e: Exception) {
-                                 Toast.makeText(context, "${e.message}", Toast.LENGTH_LONG).show()
-                             }
-                         }
-                        }
-                    )
-            ) {
-                Icon(painter = painterResource(id = R.drawable.baseline_add_circle_24), tint = Color.White, contentDescription = "BuildHere")
-            }
+        Box(Modifier.align(Alignment.BottomStart)) {
+            BottomBar(
+                onInventoryClick = { showInventory = !showInventory },
+                isInventoryOpen = showInventory
+            )
         }
-    }
     } //saved id login !true then:
         if (savedUUID == "") {
             LoginDialog(
@@ -326,21 +311,49 @@ fun MapItem(locationGet: LocationGet) {
                 initialIp = savedIP
             )}
 
-    if (savedUUID == "FETCHING") {
-        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center) )
-    }
-    if (showUuidDialog) {
-        UuidLoginScreen(onDismiss = { showUuidDialog = false })
-    }
+        if (savedUUID == "FETCHING") {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center) )
+        }
+        if (showUuidDialog) {
+            UuidLoginScreen(onDismiss = { showUuidDialog = false })
+        }
 
-    if (clickedPlayer != null) {
-        val name = clickedPlayer?.properties?.get("name")?.jsonPrimitive?.content ?: "Unknown"
-        EntityDetailView(
-            name = name,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 64.dp)
-        )
-    }
-    }
+        if (showInventory) {
+            // This Box acts as a "scrim" or overlay that closes the inventory when you click anywhere else
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { showInventory = false }
+            )
+
+            val inventoryData by InvParse.instance.inventory.collectAsStateWithLifecycle()
+            InventoryViewUI(
+                data = inventoryData,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 125.dp)
+                    .heightIn(max = 400.dp) // Constrain height so it scrolls if many items
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { /* Consuming click to prevent closing when clicking the UI itself */ },
+                onItemClick = { resource ->
+                    Log.d("Inventory", "Clicked on ${resource.type.name}")
+                }
+            )
+        }
+
+        if (clickedPlayer != null && !showInventory) {
+            val name = clickedPlayer?.properties?.get("name")?.jsonPrimitive?.content ?: "Unknown"
+            EntityDetailView(
+                name = name,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 120.dp)
+            )
+        }
+    } // HERE ends the BOX
 }

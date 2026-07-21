@@ -8,13 +8,9 @@ import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.Alignment
-import androidx.lifecycle.lifecycleScope
 import backStage.DataStoreManager
 import backStage.LocationGet
-import backStage.veiwModels.NetworkViewModel
 import com.weaponizerzstudio.fieryescalation_gpsrts.ui.theme.FieryEscalationGpsRtsTheme
-import kotlinx.coroutines.launch
-import netTools.FieryNetwork
 
 class MainActivity : ComponentActivity() {
 

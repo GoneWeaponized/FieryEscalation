@@ -1,4 +1,4 @@
-package backStage.veiwModels
+package backStage.viewModels
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -24,13 +24,24 @@ class NetworkViewModel : ViewModel() {
     suspend fun readStart() {
         fieryNetwork.readerStart()
     }
+    suspend fun loginEvn(cmd: ByteCommands, uu: String) {
+        try {
+            fieryNetwork.loginEvent(cmd, uu)
+        } catch (e: Exception) {
+            Log.e("NetworkViewModel", "loginEvn failed: ${e.message}")
+        }
+    }
     suspend fun loginWrite(name: String, lat: Double, long: Double, command: ByteCommands) {
-        fieryNetwork.loginSend(name, lat, long, command)
+        try {
+            fieryNetwork.loginSend(name, lat, long, command)
+        } catch (e: Exception) {
+            Log.e("NetworkViewModel", "loginWrite failed: ${e.message}")
+        }
     }
     fun send(cmd: ByteCommands, lt: Double, ln: Double, uu: String) {
         viewModelScope.launch {
             try {
-                fieryNetwork.sendWriter(cmd, lt, ln, uu)
+                fieryNetwork.getPlayers(cmd, lt, ln, uu)
             } catch (e: Exception) {
                 Log.e("Err VM", "Failed to send: ${e.message}")
             }

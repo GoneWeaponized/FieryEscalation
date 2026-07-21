@@ -1,6 +1,5 @@
 package mapItemLoading
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -9,13 +8,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import fieryEntity.parseOperations.EntityParser
+import com.weaponizerzstudio.fieryescalation_gpsrts.R
+import fieryTypes.parseOperations.EntityParser
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
-import com.weaponizerzstudio.fieryescalation_gpsrts.R
-import fieryEntity.TypeEntity
-import kotlinx.serialization.json.jsonPrimitive
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.image
 import org.maplibre.compose.layers.SymbolLayer
@@ -26,7 +23,6 @@ import org.maplibre.spatialk.geojson.Feature
 import org.maplibre.spatialk.geojson.FeatureCollection
 import org.maplibre.spatialk.geojson.Geometry
 import org.maplibre.spatialk.geojson.Point
-import uiElementsAndMisc.EntityDetailView
 
 val entityParser = EntityParser()
 
